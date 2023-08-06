@@ -1,5 +1,5 @@
 const User = require("../model/userModel.js");
-const brcypt = require("bcrypt");
+const bcrypt = require("bcrypt");
 
 module.exports.register = async (req, res, next) => {
     try {
@@ -7,13 +7,13 @@ module.exports.register = async (req, res, next) => {
       const usernameCheck = await User.findOne({ username });
       // console.log( username)
       if (usernameCheck)
-        return  res.status(203).send("Username already used");
-        // return res.json({ msg: "Username already used", status: false });
+        // return  res.status(203).send("Username already used");
+        return res.json({ msg: "Username already used", status: false });
       const emailCheck = await User.findOne({ email });
       if (emailCheck)
-        return res.status(203).send("Email already used");
-        // return res.json({ msg: "Email already used", status: false });
-        const hashedPassword = await brcypt.hash(password, 10);
+        // return res.status(203).send("Email already used");
+        return res.json({ msg: "Email already used", status: false });
+        const hashedPassword = await bcrypt.hash(password, 10);
       const user = await User.create({
         email,
         username,
@@ -21,6 +21,22 @@ module.exports.register = async (req, res, next) => {
       });
       delete user.password;
       // return res.status(200).send(req.body)
+      return res.json({ status: true, user });
+    } catch (ex) {
+      next(ex);
+    }
+  };
+
+  module.exports.login = async (req, res, next) => {
+    try {
+      const { username, password } = req.body;
+      const user = await User.findOne({ username });
+      if (!user)
+        return res.json({ msg: "Incorrect Username or Password", status: false });
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid)
+        return res.json({ msg: "Incorrect Username or Password", status: false });
+      delete user.password;
       return res.json({ status: true, user });
     } catch (ex) {
       next(ex);
